@@ -1,0 +1,46 @@
+name: Upload Image to S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  upload-image:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install boto3 pillow
+
+    - name: Classify image and upload to S3
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      run: |
+        # Add your image path here
+        IMAGE_PATH=".github/workflows/created-self-hosted-runner.PNG"
+        
+        # Classification logic (example: using PIL to check image format)
+        from PIL import Image
+
+        img = Image.open(IMAGE_PATH)
+        if img.format not in ["JPEG", "PNG"]:
+            raise ValueError("Unsupported image format")
+        
+        # Upload to S3
+        import boto3
+        s3 = boto3.client('s3')
+        s3.upload_file(IMAGE_PATH, "${{ env.S3_BUCKET_NAME }}", ".github/workflows/created-self-hosted-runner.PNG")
+
